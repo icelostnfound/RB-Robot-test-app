@@ -1,9 +1,9 @@
-﻿// Created by Microsoft (R) C/C++ Compiler Version 11.00.50727.1 (b132a8df).
+﻿// Created by Microsoft (R) C/C++ Compiler Version 11.00.50727.1 (88e18520).
 //
-// d:\rb\project\rb robot\rb robot app backups\rb robot app20151127\rb robot app20160111-速度模式\rb robot app\motor test 20151013\debug\teechart8.tlh
+// d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\debug\teechart8.tlh
 //
 // C++ source equivalent of Win32 type library C:\\Windows\\System32\\TeeChart8.ocx
-// compiler-generated file created 01/12/16 at 22:47:17 - DO NOT EDIT!
+// compiler-generated file created 01/17/16 at 14:56:44 - DO NOT EDIT!
 
 #pragma once
 #pragma pack(push, 8)
@@ -24131,7 +24131,7 @@ ITeeFunction : IDispatch
 // Function implementation mapping
 //
 
-#pragma start_map_region("d:\rb\project\rb robot\rb robot app backups\rb robot app20151127\rb robot app20160111-速度模式\rb robot app\motor test 20151013\debug\teechart8.tli")
+#pragma start_map_region("d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\debug\teechart8.tli")
 __declspec(implementation_key(1)) HRESULT ITChartEvents::OnAfterDraw ( );
 __declspec(implementation_key(2)) HRESULT ITChartEvents::OnBeforeDrawSeries ( );
 __declspec(implementation_key(3)) HRESULT ITChartEvents::OnBeforeDrawAxes ( );

@@ -70,11 +70,10 @@ double Vel_Real_AA=0;
 double init_P=0;
 F64 Vel_Real_SA=0;
 F64 Vel_Buffer[4]={0};
-double Vel_Comd=0;
-double Pos_Comd=0;
-double Vel_Error[3]={0};
-//double Vel_PI=0;
-double Vel_PID=0;
+double Pos_Comd_Motor=0;
+double Pos_Comd_Arm=0;
+double Pos_Error[3]={0};
+double Pos_PID=0;
 double T_C=50;//控制周期，单位毫秒
 F64 Vel_Average=0;
 BYTE rxdata1[1024]={0};
@@ -1330,35 +1329,25 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 
 		break;
 	case 1:
+		if (AS_i==3){
+		AS_i=0;}
 		GetDlgItemText(EDIT_INPUT_KP,KP_S);//获取对话框KP数值
 		KP=atof(KP_S);
 		GetDlgItemText(EDIT_INPUT_KI,KI_S);//获取对话框KI数值
 		KI=atof(KI_S);
 		GetDlgItemText(EDIT_INPUT_KD,KD_S);//获取对话框KD数值
 		KD=atof(KD_S);
-		if (AS_i==3)
-		{
-			AS_i=0;
-		}
 		m_AA[AS_i]=Posi_Angle_Arm/**M_PI/180*/;//tmp1为返回的角度值
 		str2.Format(_T("%8.3f"),m_AA[AS_i]);
 		::SetDlgItemText(m_hWnd,EDIT_AA, str2);
-		//if (m_AA[AS_i]<1.7||m_AA[AS_i]>3.32||m_SA[AS_i]<2.9||m_SA[AS_i]>4.36)//如果机构超程或复位，紧急停机
-		//{
-		//	APS_stop_move( 0 );
-		//	APS_stop_move( 1 );
-		//	APS_set_servo_on(0, OFF);
-		//	APS_set_servo_on(1, OFF);
-		//	dlg->KillTimer(1);
-		//}
 		switch (AS_i)
 			{
 			case 0:
 				if(FT_i==0){
 					Vel_Real_AA=0;}
 				else{
-					Vel_Real_AA=(m_AA[0]-m_AA[1])/0.11;}
-				//Vel_Real_SA=(m_SA[AS_i]-m_SA[AS_i+1])/0.2;
+					Vel_Real_AA=(m_AA[0]-m_AA[1])/0.11;
+				}
 				break;
 			case 1:
 				if (FT_i<=1)
@@ -1369,10 +1358,8 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 				{
 					Vel_Real_AA=(m_AA[1]-m_AA[2])/0.11;
 				}
-				//Vel_Real_SA=(m_SA[AS_i]-m_SA[AS_i+1])/0.2;
 				break;
 			case 2:Vel_Real_AA=(m_AA[2]-m_AA[0])/0.11;
-				//Vel_Real_AA=(m_AA[AS_i]-m_AA[AS_i-2])/0.2;
 				break;
 			}
 		str4.Format(_T("%f"),Vel_Real_AA);
@@ -1382,61 +1369,81 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 		if (FT_i<=300)
 			{
 				if (FT_i==0)
-				{
-					APS_set_axis_param_f( 0, PRA_STP_DEC, 10000.0 );
-					APS_set_axis_param_f( 0, PRA_CURVE,      0.5 ); //Set acceleration rate
-					APS_set_axis_param_f( 0, PRA_ACC,    ACC_1 ); //Set acceleration rate
-					APS_set_axis_param_f( 0, PRA_DEC,    ACC_1 ); //Set deceleration rate
+				 {
+					APS_set_axis_param_f( 0, PRA_SF, 0.5      );
+					APS_set_axis_param_f( 0, PRA_ACC, 10000.0 );
+					APS_set_axis_param_f( 0, PRA_DEC, 10000.0 );
+					APS_set_axis_param_f( 0, PRA_VM,  1000.0   );
 					//Check servo on or not
 					if( !( ( APS_motion_io_status( 0 ) >> MIO_SVON ) & 1 ) )  
 					{
-			//			if (m_AA[AS_i]>1.92&&m_AA[AS_i]<3.32&&m_SA>3.09&&m_SA<4.36)
 						APS_set_servo_on( 0, ON ); 
-						//Sleep( 500 ); // Wait stable.
 					}
-					APS_vel( 0, 0, 0, 0 ); 
-				}
+					APS_ptp_all( 
+						0  // I32 Axis_ID
+						, OPT_RELATIVE // I32 Option
+						, 0 // F64 Position
+						, 0     // F64 Vs
+						, 10000 // F64 Vm
+						, 0     // F64 Ve
+						, 10000 // F64 Acc
+						, 10000// F64 Dec
+						, 0.5 // F64 SFac
+						, 0   // ASYNCALL *Wait
+						);
+				 }
 				else
-				{
+				 {
 					if (FT_i<4)
-					{
+					 {
 						Vel_Buffer[FT_i]=Posi_Angle_Arm;//Vel_Real_AA;
 						target1=Posi_Angle_Arm;//Vel_Real_AA;
-					}
+					 }
 					else
-					{
+					 {
 						Vel_Buffer[0]=Vel_Buffer[1];
 						Vel_Buffer[1]=Vel_Buffer[2];
 						Vel_Buffer[2]=Vel_Buffer[3];
 						Vel_Buffer[3]=Posi_Angle_Arm;//Vel_Real_AA;
 						target1=(Vel_Buffer[0]+Vel_Buffer[1]+Vel_Buffer[2]+Vel_Buffer[3])/4;
-					}
+					 }
 				
-					Pos_Comd=90*sin(((double)FT_i)/300*M_PI)+Pos_init;
-					Vel_Error[0]=Pos_Comd-target1;
-					Vel_PID=Vel_PID+KP*(Vel_Error[0]-Vel_Error[1])+KI*Vel_Error[0]+KD*(Vel_Error[0]-2*Vel_Error[1]+Vel_Error[2]);
-					Vel_Error[2]=Vel_Error[1];
-					Vel_Error[1]=Vel_Error[0];
-					Vel_Comd=Vel_PID*625/*/10*/;
-					APS_set_axis_param_f( 0, PRA_STP_DEC, 10000.0 );
-					APS_set_axis_param_f( 0, PRA_CURVE,      0.5 ); //Set acceleration rate
-					APS_set_axis_param_f( 0, PRA_ACC,    ACC_1 ); //Set acceleration rate
-					APS_set_axis_param_f( 0, PRA_DEC,    ACC_1 ); //Set deceleration rate
+					Pos_Comd_Arm=85*sin(((double)FT_i)/300*M_PI)+Pos_init;
+					Pos_Error[0]=Pos_Comd_Arm-target1;
+					Pos_PID=Pos_PID+KP*(Pos_Error[0]-Pos_Error[1])+KI*Pos_Error[0]+KD*(Pos_Error[0]-2*Pos_Error[1]+Pos_Error[2]);
+					Pos_Error[2]=Pos_Error[1];
+					Pos_Error[1]=Pos_Error[0];
+					Pos_Comd_Motor=Pos_PID*Unit_Convert/*/10*/;
+					APS_set_axis_param_f( 0, PRA_SF, 0.5      );
+					APS_set_axis_param_f( 0, PRA_ACC, 10000.0 );
+					APS_set_axis_param_f( 0, PRA_DEC, 10000.0 );
+					APS_set_axis_param_f( 0, PRA_VM,  1000.0   );
 					//Check servo on or not
 					if( !( ( APS_motion_io_status( 0 ) >> MIO_SVON ) & 1 ) )  
 					{
 						APS_set_servo_on( 0, ON ); 
-						//Sleep( 500 ); // Wait stable.
 					}
-					if (Vel_Comd>Value_Vel_RightEar)
+					/*if (Pos_Comd_Motor>Value_Vel_RightEar)
 					{
-						Vel_Comd=Value_Vel_RightEar/10;
-					}
-					if (Vel_Comd>=0)
-						APS_vel(0, 0,Vel_Comd, 0 );
+					Pos_Comd_Motor=Value_Vel_RightEar/10;
+					}*/
+					/*if (Vel_Comd>=0)
+					APS_vel(0, 0,Vel_Comd, 0 );
 					else
-						APS_vel(0, 1, -1*Vel_Comd, 0 );
-				
+					APS_vel(0, 1, -1*Vel_Comd, 0 );*/
+					// Start a relative p to p move
+					APS_ptp_all( 
+						0  // I32 Axis_ID
+						, OPT_RELATIVE // I32 Option
+						, Pos_Comd_Motor // F64 Position
+						, 0     // F64 Vs
+						, 10000 // F64 Vm
+						, 0     // F64 Ve
+						, 10000 // F64 Acc
+						, 10000// F64 Dec
+						, 0.5 // F64 SFac
+						, 0   // ASYNCALL *Wait
+						);
 				}
 					APS_get_feedback_velocity_f(0, &tmp);
 					lineseries1=(CSeries)m_FTVEL.Series(0);
@@ -1444,11 +1451,11 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 					lineseries3=(CSeries)m_FTVEL.Series(2);
 					lineseries4=(CSeries)m_FTVEL.Series(3);
 					lineseries5=(CSeries)m_FTVEL.Series(4);
-					lineseries1.AddXY((float)FT_i*T_C/1000,Pos_Comd,NULL,0);
+					lineseries1.AddXY((float)FT_i*T_C/1000,Pos_Comd_Arm,NULL,0);
 					lineseries2.AddXY((float)FT_i*T_C/1000,target1,NULL,0);
-					lineseries3.AddXY((float)FT_i*T_C/1000,Vel_Comd,NULL,0);
-					lineseries4.AddXY((float)FT_i*T_C/1000,Vel_Error[0],NULL,0);
-					lineseries5.AddXY((float)FT_i*T_C/1000,tmp,NULL,0);
+					lineseries3.AddXY((float)FT_i*T_C/1000,Pos_Comd_Motor/Unit_Convert,NULL,0);
+					lineseries4.AddXY((float)FT_i*T_C/1000,Pos_Error[0],NULL,0);
+					lineseries5.AddXY((float)FT_i*T_C/1000,tmp/Unit_Convert,NULL,0);
 					QueryPerformanceCounter(&stop_t);
 					exe_time=50+1000*(stop_t.QuadPart-start_t.QuadPart)/freq.QuadPart;
 					strTime.Format(_T("%f"),exe_time);
@@ -1557,11 +1564,11 @@ void Cmotortest20151013Dlg::OnClearAllSeries()
 		Vel_Buffer[i]=0;
 	}
 	target1=0;
-	Vel_Comd=0;
-	Vel_Error[0]=0;
-	Vel_Error[1]=0;
-	Vel_PID=0;
-	Vel_Error[2]=0;
+	Pos_Comd_Motor=0;
+	Pos_Error[0]=0;
+	Pos_Error[1]=0;
+	Pos_Error[2]=0;
+	Pos_PID=0;
 	AS_i=0;
 	FT_i=0;
 }
