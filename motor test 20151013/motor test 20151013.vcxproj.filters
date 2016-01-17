@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\SixAxis Header Files">
+      <UniqueIdentifier>{f82812f6-53e6-4f68-b198-a1c488cf1053}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\SixAxis Source Files">
+      <UniqueIdentifier>{f99b006a-47d6-4042-a74c-4f8c5d810d10}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="motor test 20151013.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="motor test 20151013Dlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="APS_Define.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="APS168.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorCodeDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Motion.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="type_def.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="type_def_pid.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NIDAQmx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ForceChartDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CAxes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CAxis.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CSeries.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CTChart.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="m1f_tchart.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CTChart0.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CScroll.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\atidaqft.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\ConfigureSaveData.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\DAQSys.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\DlgProxy.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\FTWrapper.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\RegAccess.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ATI Header Files\TTFSaveData.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProgramOpDlg.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SixAixsSettingDlg.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SixAxisSensorDlg.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SixAxisSensorInfoDlg.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabGeneral.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabNIDAQ.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabOutputOptions.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabStartup.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabToolTransforms.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PopToolTransform.h">
+      <Filter>头文件\SixAxis Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mscomm1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="motor test 20151013.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="motor test 20151013Dlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Motion.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceChartDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="m1f_tchart.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ATI Source Files\atidaqft.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ATI Source Files\DAQSys.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ATI Source Files\DlgProxy.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ATI Source Files\FTWrapper.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ATI Source Files\RegAccess.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProgramOpDlg.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SixAixsSettingDlg.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SixAxisSensorDlg.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SixAxisSensorInfoDlg.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabGeneral.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabNIDAQ.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabOutputOptions.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabStartup.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabToolTransforms.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PopToolTransform.cpp">
+      <Filter>源文件\SixAxis Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mscomm1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="motor test 20151013.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\motortest20151013.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\motor test 20151013.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\coordinate.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\bitmap2.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
