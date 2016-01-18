@@ -48,6 +48,7 @@ BOOL m_flag3 = TRUE;
 BOOL m_flag4 = TRUE;
 BOOL m_flag5 = TRUE;
 BOOL PID_flag=true;
+BOOL PID_Prio=TRUE;
 int times=0;
 int times3=0;
 double sum1;
@@ -59,6 +60,7 @@ double R[100]={0};
 double EMG[10]={0};
 double EAFW[100]={0};
 double EAFR[5]={0};
+double Pos_init=0;
 F64 tmp = 0;
 double Posi_Angle_Arm=0;//
 F64 m_VEROR=0;
@@ -72,6 +74,7 @@ F64 Vel_Real_SA=0;
 F64 Vel_Buffer[4]={0};
 double Pos_Comd_Motor=0;
 double Pos_Comd_Arm=0;
+double  Pos_Comd=0;
 double Pos_Error[3]={0};
 double Pos_PID=0;
 double T_C=50;//控制周期，单位毫秒
@@ -765,11 +768,11 @@ void ThreadFun4(LPVOID pParam)
 		::SetDlgItemText(dlg->m_hWnd,EDIT_LINEAR, str3);
 		//保护模式-速度，力，位置
 		APS_get_feedback_velocity_f(0, &tmp);
-		if (Posi_Angle_Arm<6||Posi_Angle_Arm>85||tmp>150000)
-		{
-			dlg->OnBnClickedVelStop();
-
-		} 
+		if (Posi_Angle_Arm<8||Posi_Angle_Arm>85||tmp>200000)
+			 {
+				dlg->OnBnClickedVelStop();
+			 }
+	
 
 		//if (m_AA[AS_i]<1.7||m_AA[AS_i]>3.32||m_SA[AS_i]<2.9||m_SA[AS_i]>4.36)//如果机构超程或复位，紧急停机
 		//{
@@ -881,12 +884,12 @@ void Cmotortest20151013Dlg::OnBnClickedInitialButton()
 
 	}
 	//速度模式下调节电机PID参数
-	APS_set_axis_param(0,PRA_KP_GAIN,18309);
+	/*APS_set_axis_param(0,PRA_KP_GAIN,18309);
 	APS_set_axis_param(0,PRA_KI_GAIN,35528);
 	APS_set_axis_param(0,PRA_KD_GAIN,18883);
 	APS_set_axis_param(1,PRA_KP_GAIN,17577);
 	APS_set_axis_param(1,PRA_KI_GAIN,32879);
-	APS_set_axis_param(1,PRA_KD_GAIN,18801);
+	APS_set_axis_param(1,PRA_KD_GAIN,18801);*/
 			////////////////////////
 }
 int Cmotortest20151013Dlg::OnCreate(LPCREATESTRUCT lpCreateStruct) 
@@ -1278,7 +1281,6 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 	double KP(0);
 	double KI(0);
 	double KD(0);
-	double Pos_init=0;
 	//定义存储开始于结束的时间的变量
 	LARGE_INTEGER freq;
 	LARGE_INTEGER start_t,stop_t;
@@ -1289,7 +1291,6 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 	//////////////////////////////////////////////////////////////////////////
 	QueryPerformanceFrequency(&freq);
 	QueryPerformanceCounter(&start_t);
-	Pos_init=Posi_Angle_Arm;
 	F64 ACC_1=8000000;
 	GetDlgItemText(EDIT_FTT_Z,m_sixFt);//获取当前六维力传感器FZ数值
 	sixFt=atof(m_sixFt);
@@ -1366,31 +1367,21 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 		str5.Format(_T("%f"),Vel_Real_SA);
 		::SetDlgItemText(m_hWnd,EDIT_AA_VEL, str4);
 		::SetDlgItemText(m_hWnd,EDIT_SA_VEL, str5);
-		if (FT_i<=300)
+		if (FT_i<=500)
 			{
 				if (FT_i==0)
 				 {
-					APS_set_axis_param_f( 0, PRA_SF, 0.5      );
-					APS_set_axis_param_f( 0, PRA_ACC, 10000.0 );
-					APS_set_axis_param_f( 0, PRA_DEC, 10000.0 );
-					APS_set_axis_param_f( 0, PRA_VM,  1000.0   );
+					 APS_set_axis_param_f( 0, PRA_STP_DEC, 10000.0 );
+					 APS_set_axis_param_f( 0, PRA_CURVE,      0.5 ); //Set acceleration rate
+					 APS_set_axis_param_f( 0, PRA_ACC,    200000.0 ); //Set acceleration rate
+					 APS_set_axis_param_f( 0, PRA_DEC,    200000.0 ); //Set deceleration rate
+
 					//Check servo on or not
 					if( !( ( APS_motion_io_status( 0 ) >> MIO_SVON ) & 1 ) )  
 					{
 						APS_set_servo_on( 0, ON ); 
 					}
-					APS_ptp_all( 
-						0  // I32 Axis_ID
-						, OPT_RELATIVE // I32 Option
-						, 0 // F64 Position
-						, 0     // F64 Vs
-						, 10000 // F64 Vm
-						, 0     // F64 Ve
-						, 10000 // F64 Acc
-						, 10000// F64 Dec
-						, 0.5 // F64 SFac
-						, 0   // ASYNCALL *Wait
-						);
+					APS_vel(0, 0, 0, 0 );
 				 }
 				else
 				 {
@@ -1408,42 +1399,31 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 						target1=(Vel_Buffer[0]+Vel_Buffer[1]+Vel_Buffer[2]+Vel_Buffer[3])/4;
 					 }
 				
-					Pos_Comd_Arm=85*sin(((double)FT_i)/300*M_PI)+Pos_init;
-					Pos_Error[0]=Pos_Comd_Arm-target1;
+					Pos_Comd=60*sin(((double)FT_i)/500*M_PI);
+					Pos_Error[0]=Pos_Comd+Pos_init-Posi_Angle_Arm;
 					Pos_PID=Pos_PID+KP*(Pos_Error[0]-Pos_Error[1])+KI*Pos_Error[0]+KD*(Pos_Error[0]-2*Pos_Error[1]+Pos_Error[2]);
 					Pos_Error[2]=Pos_Error[1];
 					Pos_Error[1]=Pos_Error[0];
-					Pos_Comd_Motor=Pos_PID*Unit_Convert/*/10*/;
-					APS_set_axis_param_f( 0, PRA_SF, 0.5      );
-					APS_set_axis_param_f( 0, PRA_ACC, 10000.0 );
-					APS_set_axis_param_f( 0, PRA_DEC, 10000.0 );
-					APS_set_axis_param_f( 0, PRA_VM,  1000.0   );
+					Pos_Comd_Motor=(Pos_PID+30)*625;
+					APS_set_axis_param_f( 0, PRA_STP_DEC, 10000.0 );
+					APS_set_axis_param_f( 0, PRA_CURVE,      0.5 ); //Set acceleration rate
+					APS_set_axis_param_f( 0, PRA_ACC,    200000.0 ); //Set acceleration rate
+					APS_set_axis_param_f( 0, PRA_DEC,    200000.0 ); //Set deceleration rate
+
 					//Check servo on or not
 					if( !( ( APS_motion_io_status( 0 ) >> MIO_SVON ) & 1 ) )  
 					{
 						APS_set_servo_on( 0, ON ); 
+						//Sleep( 500 ); // Wait stable.
 					}
-					/*if (Pos_Comd_Motor>Value_Vel_RightEar)
+					if (Pos_Comd_Motor>Value_Vel_RightEar)
 					{
 					Pos_Comd_Motor=Value_Vel_RightEar/10;
-					}*/
-					/*if (Vel_Comd>=0)
-					APS_vel(0, 0,Vel_Comd, 0 );
+					}
+					if (Pos_Comd_Motor>=0)
+					APS_vel(0, 0,Pos_Comd_Motor, 0 );
 					else
-					APS_vel(0, 1, -1*Vel_Comd, 0 );*/
-					// Start a relative p to p move
-					APS_ptp_all( 
-						0  // I32 Axis_ID
-						, OPT_RELATIVE // I32 Option
-						, Pos_Comd_Motor // F64 Position
-						, 0     // F64 Vs
-						, 10000 // F64 Vm
-						, 0     // F64 Ve
-						, 10000 // F64 Acc
-						, 10000// F64 Dec
-						, 0.5 // F64 SFac
-						, 0   // ASYNCALL *Wait
-						);
+					APS_vel(0, 1, -1*Pos_Comd_Motor, 0 );
 				}
 					APS_get_feedback_velocity_f(0, &tmp);
 					lineseries1=(CSeries)m_FTVEL.Series(0);
@@ -1451,11 +1431,11 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 					lineseries3=(CSeries)m_FTVEL.Series(2);
 					lineseries4=(CSeries)m_FTVEL.Series(3);
 					lineseries5=(CSeries)m_FTVEL.Series(4);
-					lineseries1.AddXY((float)FT_i*T_C/1000,Pos_Comd_Arm,NULL,0);
-					lineseries2.AddXY((float)FT_i*T_C/1000,target1,NULL,0);
-					lineseries3.AddXY((float)FT_i*T_C/1000,Pos_Comd_Motor/Unit_Convert,NULL,0);
+					lineseries1.AddXY((float)FT_i*T_C/1000,Pos_Comd,NULL,0);
+					lineseries2.AddXY((float)FT_i*T_C/1000,Posi_Angle_Arm-Pos_init,NULL,0);
+					lineseries3.AddXY((float)FT_i*T_C/1000,Pos_PID,NULL,0);
 					lineseries4.AddXY((float)FT_i*T_C/1000,Pos_Error[0],NULL,0);
-					lineseries5.AddXY((float)FT_i*T_C/1000,tmp/Unit_Convert,NULL,0);
+					lineseries5.AddXY((float)FT_i*T_C/1000,tmp/625,NULL,0);
 					QueryPerformanceCounter(&stop_t);
 					exe_time=50+1000*(stop_t.QuadPart-start_t.QuadPart)/freq.QuadPart;
 					strTime.Format(_T("%f"),exe_time);
@@ -1581,10 +1561,19 @@ void Cmotortest20151013Dlg::OnPidControl()
 	if( Is_CARD_INITIAL() == NO ) return;
 	if (Is_axis_err(0) == YES) return;
 	if (Is_axis_err(1) == YES) return;
+	Pos_init=Posi_Angle_Arm;
+	
 	if (PID_flag)
 	{
+		
+		if (Posi_Angle_Arm>13)
+		{
+		MessageBox(_T("机器人不在初始位置"));
+		return;
+		}
 		OnClearAllSeries();
 		SetTimer(1,50,NULL);
+		Sleep(50);
 		SetDlgItemText(BUTTON_PID_CONTROL,_T("停止"));
 		PID_flag=false;
 	} 
