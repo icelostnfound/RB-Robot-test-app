@@ -21,6 +21,9 @@
 #include"CTChart.h"
 #include"CScroll.h"
 #include <math.h>
+#include "Windows.h"
+#include "mmsystem.h"
+#pragma comment(lib,"winmm.lib")
 //////////////////////////
 extern  BOOL m_flag1;
 extern  BOOL m_flag2;
@@ -36,12 +39,14 @@ extern  BOOL m_flag5;
 #define Value_Posit_LeftShoulder 179642
 #define Value_Vel_LeftShoulder 140524
 #define Unit_Convert 3413.33    //60*1.25*16384/360 传动系数，60-减数比，16384-一圈脉冲数，2pi-圆周
+#define Sample_Vel_Time 10//速度采样间隔
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 VOID ThreadFun1(LPVOID pParam);
 VOID ThreadFun2(LPVOID pParam);
 VOID ThreadFun3(LPVOID pParam);
 VOID ThreadFun4(LPVOID pParam);
 VOID ThreadFun5(LPVOID pParam);
+VOID PASCAL OnTimeFunc(UINT wTimerID,UINT msg,DWORD dwUser,DWORD dw1,DWORD dw2);//多媒体定时器回调函数
 BOOL m_flag1 = TRUE;
 BOOL m_flag2 = TRUE;
 BOOL m_flag3 = TRUE;
@@ -80,6 +85,10 @@ double Pos_PID=0;
 double T_C=50;//控制周期，单位毫秒
 F64 Vel_Average=0;
 BYTE rxdata1[1024]={0};
+CMutex g_mutex;//互斥锁
+UINT wAccuracy;// 定义分辨率
+MMRESULT Mtimer_ID;
+double exe_time_Vel=0;
 //int Sum_i=0;
 CForceChartDlg m_ForceChartDlg;
 
@@ -261,7 +270,9 @@ BOOL Cmotortest20151013Dlg::OnInitDialog()
 	for(int i=0;i<2;i++)
 		ptp[i]=0;
 	FT_i=0;
+	Reci_Vel_Arm();
 	RelaySwitchOpen();//开启继电器
+	
 	//用户登录 Login();
 	//开启线程1-输出电机状态参数，实时监测返回机制是否启动
 	hThread1=CreateThread(NULL,
@@ -270,7 +281,7 @@ BOOL Cmotortest20151013Dlg::OnInitDialog()
 		this,
 		0,
 &ThreadID1);
-	//开启线程4-实时输出两个角位移传感器，两个拉力传感器的值
+//	//开启线程4-实时输出两个角位移传感器，两个拉力传感器的值
 	hThread4=CreateThread(NULL,
 		0,
 		(LPTHREAD_START_ROUTINE)ThreadFun4,
@@ -741,20 +752,21 @@ void ThreadFun4(LPVOID pParam)
 	CString str6;
 	CString strTime;
 	CString m_Adress;
+	CSeries lineseries1;
+	CSeries lineseries2;
 	double  m_MF1;
 	double m_MF2;
 	double m_linear=0;
 	CByteArray data;
 	CTime time;
 	int len =0;
-	clock_t start,finish;//clock_t start,finish;//定义存储开始于结束的时间的变量
+//	clock_t start,finish;clock_t start,finish;//定义存储开始于结束的时间的变量
 	Cmotortest20151013Dlg *dlg=(Cmotortest20151013Dlg*)pParam;
 	m_flag4 = TRUE;
 	m_Adress=_T("02");
 	len = Str2Hex(m_Adress, data);
 	while (m_flag4)
 	{
-		start=clock();//存储开始时间
 		dlg->DAQ_EAF("Dev1",2,3);//数据采集卡采集角位移以及拉力信号
 		dlg->DAQ_EMG("Dev1",6);//采集腕部光电位移传感器信号
 		m_linear=80-6*EMG[5];
@@ -763,29 +775,40 @@ void ThreadFun4(LPVOID pParam)
 		str1.Format(_T("%8.3f"),m_MF1);
 		str2.Format(_T("%8.3f"),m_MF2);
 		str3.Format(_T("%8.3f"),m_linear);
+		g_mutex.Lock();
+		str4.Format(_T("%8.3f"),Posi_Angle_Arm);
+		g_mutex.Unlock();
+		g_mutex.Lock();
+		str5.Format(_T("%f"),Vel_Real_AA);
+		g_mutex.Unlock();
+		g_mutex.Lock();
+		str6.Format(_T("%8.3f"),exe_time_Vel);
+		g_mutex.Unlock();
 		::SetDlgItemText(dlg->m_hWnd,EDIT_MF1, str1);
 		::SetDlgItemText(dlg->m_hWnd,EDIT_MF2, str2);
 		::SetDlgItemText(dlg->m_hWnd,EDIT_LINEAR, str3);
+		::SetDlgItemText(dlg->m_hWnd,EDIT_AA, str4);//角位移编码器角度值
+		::SetDlgItemText(dlg->m_hWnd,EDIT_AA_VEL, str5);
+		::SetDlgItemText(dlg->m_hWnd,IDC_EDIT_LOOP, str6);
+		lineseries1=(CSeries)dlg->m_FTVEL.Series(0);
+		lineseries2=(CSeries)dlg->m_FTVEL.Series(1);
+		/*lineseries1.AddXY((float)dlg->FT_i,Posi_Angle_Arm,NULL,0);
+		lineseries2.AddXY((float)dlg->FT_i,Vel_Real_AA,NULL,0);
+		dlg->FT_i++;*/
 		//保护模式-速度，力，位置
 		APS_get_feedback_velocity_f(0, &tmp);
-		if (Posi_Angle_Arm<8||Posi_Angle_Arm>85||tmp>200000)
+		if (PID_Prio)
+		{
+			if (Posi_Angle_Arm<8||Posi_Angle_Arm>85||tmp>200000)
 			 {
 				dlg->OnBnClickedVelStop();
+				dlg->OnWarning();
 			 }
-	
-
-		//if (m_AA[AS_i]<1.7||m_AA[AS_i]>3.32||m_SA[AS_i]<2.9||m_SA[AS_i]>4.36)//如果机构超程或复位，紧急停机
-		//{
-		//	APS_stop_move( 0 );
-		//	APS_stop_move( 1 );
-		//	APS_set_servo_on(0, OFF);
-		//	APS_set_servo_on(1, OFF);
-		//	dlg->KillTimer(1);
-		//}
-		//输出循环所用时间
-		finish=clock();//存储结束时间
-		strTime.Format(_T("%d"),finish-start);
-		::SetDlgItemText(dlg->m_hWnd,IDC_EDIT_LOOP, strTime);
+			else
+			{
+				dlg->OnWarning();
+			}
+		}
 		
 	}
 	return;
@@ -795,6 +818,75 @@ void ThreadFun5(LPVOID pParam)
 	
 	
 	return;
+}
+VOID PASCAL OnTimeFunc(UINT wTimerID,UINT msg,DWORD dwUser,DWORD dw1,DWORD dw2)
+{
+	LARGE_INTEGER freq;
+	LARGE_INTEGER start_t,stop_t;//定义存储开始于结束的时间的变量
+	DWORD dwbegain,dwend;
+	Cmotortest20151013Dlg *dlg=(Cmotortest20151013Dlg *)dwUser;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&start_t);
+	if (AS_i==3)
+	{
+		AS_i=0;
+	}
+	g_mutex.Lock();
+	m_AA[AS_i]=Posi_Angle_Arm;//Posi_Angle_Arm为返回的角度值
+	g_mutex.Unlock();
+	switch (AS_i)
+	{
+	case 0:
+		if (m_AA[1]==0)
+		{
+			g_mutex.Lock();
+			Vel_Real_AA=0;
+		   g_mutex.Unlock();
+		}
+		else
+		{
+			g_mutex.Lock();
+			Vel_Real_AA=(m_AA[0]-m_AA[1])/0.02;
+			g_mutex.Unlock();
+		}
+		break;
+	case 1:
+		if (m_AA[2]==0)
+		{
+			g_mutex.Lock();
+			Vel_Real_AA=(m_AA[1]-m_AA[0])/0.01;
+			g_mutex.Unlock();
+		}
+		else
+		{
+			g_mutex.Lock();
+			Vel_Real_AA=(m_AA[1]-m_AA[2])/0.02;
+			g_mutex.Unlock();
+		}
+
+		break;
+	case 2:
+		g_mutex.Lock();
+		Vel_Real_AA=(m_AA[2]-m_AA[0])/0.02;
+		g_mutex.Unlock();
+		break;
+	}
+	QueryPerformanceCounter(&stop_t);
+	exe_time_Vel=Sample_Vel_Time+1000*(stop_t.QuadPart-start_t.QuadPart)/freq.QuadPart;
+	AS_i++;
+	return;
+}
+VOID Cmotortest20151013Dlg::Reci_Vel_Arm()
+{
+	TIMECAPS tc;
+	// 利用函数timeGetDevCaps取出系统分辨率的取值范围, 如果无错则继续; 
+	if (timeGetDevCaps(&tc,sizeof(TIMECAPS))==TIMERR_NOERROR)
+	{
+		wAccuracy = min(max(tc.wPeriodMin,1),tc.wPeriodMax);//分辨率的值不能超出系统的取值范围 
+		timeBeginPeriod(wAccuracy);// 调用timeBeginPeriod函数设置定时器的分辨率
+		 // 设置定时器  
+		Mtimer_ID=timeSetEvent(Sample_Vel_Time,wAccuracy,(LPTIMECALLBACK)OnTimeFunc,DWORD(1),TIME_PERIODIC);
+	}
 }
 void Cmotortest20151013Dlg::OnBnClickedInitialButton()
 {
@@ -861,12 +953,13 @@ void Cmotortest20151013Dlg::OnBnClickedInitialButton()
 		APS_set_command_f(Axis_ID, 0.0);
 		APS_set_position_f(Axis_ID, 0.0);
 	}	
-	hThread1=CreateThread(NULL,
-		0,
-		(LPTHREAD_START_ROUTINE)ThreadFun1,
-		this,
-		0,
-		&ThreadID1);
+	
+	/*hThread1=CreateThread(NULL,
+	0,
+	(LPTHREAD_START_ROUTINE)ThreadFun1,
+	this,
+	0,
+	&ThreadID1);*/
 	//配置电机的轴参数
 	for(int i=0;i<2;i++)
 	{
@@ -884,10 +977,10 @@ void Cmotortest20151013Dlg::OnBnClickedInitialButton()
 
 	}
 	//速度模式下调节电机PID参数
-	/*APS_set_axis_param(0,PRA_KP_GAIN,18309);
-	APS_set_axis_param(0,PRA_KI_GAIN,35528);
-	APS_set_axis_param(0,PRA_KD_GAIN,18883);
-	APS_set_axis_param(1,PRA_KP_GAIN,17577);
+	APS_set_axis_param(0,PRA_KP_GAIN,18194);
+	APS_set_axis_param(0,PRA_KI_GAIN,35131);
+	APS_set_axis_param(0,PRA_KD_GAIN,18856);
+	/*APS_set_axis_param(1,PRA_KP_GAIN,17577);
 	APS_set_axis_param(1,PRA_KI_GAIN,32879);
 	APS_set_axis_param(1,PRA_KD_GAIN,18801);*/
 			////////////////////////
@@ -927,7 +1020,8 @@ void  Cmotortest20151013Dlg::OnClose()
 	m_flag4=FALSE;
 	m_flag5=FALSE;
 	m_comm.put_PortOpen(false);
-	m_comm.put_PortOpen(false);
+	timeKillEvent(Mtimer_ID);
+	timeEndPeriod(wAccuracy);
 	KillTimer(0);
 	KillTimer(1);
 	CDialog::OnClose();
@@ -1097,12 +1191,13 @@ void Cmotortest20151013Dlg::OnBnClickedRightearButton()
 void Cmotortest20151013Dlg::OnBnClickedLearnbButton()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	
 	hThread2=CreateThread(NULL,
-		0,
-		(LPTHREAD_START_ROUTINE)ThreadFun2,
-		this,
-		0,
-&ThreadID2);
+	0,
+	(LPTHREAD_START_ROUTINE)ThreadFun2,
+	this,
+	0,
+	&ThreadID2);
 	GetDlgItem(IDC_LearnE_BUTTON2)->EnableWindow(TRUE);
 	GetDlgItem(IDC_LearnB_BUTTON)->EnableWindow(FALSE);
 	times=0;
@@ -1245,6 +1340,7 @@ void Cmotortest20151013Dlg::OnBnClickedVelStop()
 	APS_set_servo_on(0 ,OFF);
 	KillTimer(0);
 	KillTimer(1);
+	
 }
 
 
@@ -1274,6 +1370,7 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 	CString KP_S(" ");
 	CString KI_S(" ");
 	CString KD_S(" ");
+	CString FF_S(" ");
 	CString str2;
     CString str3;
 	CString str4;
@@ -1281,6 +1378,7 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 	double KP(0);
 	double KI(0);
 	double KD(0);
+	double FF(0);
 	//定义存储开始于结束的时间的变量
 	LARGE_INTEGER freq;
 	LARGE_INTEGER start_t,stop_t;
@@ -1330,51 +1428,51 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 
 		break;
 	case 1:
-		if (AS_i==3){
-		AS_i=0;}
+		/*if (AS_i==3){
+		AS_i=0;}*/
 		GetDlgItemText(EDIT_INPUT_KP,KP_S);//获取对话框KP数值
 		KP=atof(KP_S);
 		GetDlgItemText(EDIT_INPUT_KI,KI_S);//获取对话框KI数值
 		KI=atof(KI_S);
 		GetDlgItemText(EDIT_INPUT_KD,KD_S);//获取对话框KD数值
 		KD=atof(KD_S);
-		m_AA[AS_i]=Posi_Angle_Arm/**M_PI/180*/;//tmp1为返回的角度值
-		str2.Format(_T("%8.3f"),m_AA[AS_i]);
-		::SetDlgItemText(m_hWnd,EDIT_AA, str2);
-		switch (AS_i)
-			{
-			case 0:
-				if(FT_i==0){
-					Vel_Real_AA=0;}
-				else{
-					Vel_Real_AA=(m_AA[0]-m_AA[1])/0.11;
-				}
-				break;
-			case 1:
-				if (FT_i<=1)
-				{
-					Vel_Real_AA=(m_AA[1]-m_AA[0])/0.055;
-				} 
-				else
-				{
-					Vel_Real_AA=(m_AA[1]-m_AA[2])/0.11;
-				}
-				break;
-			case 2:Vel_Real_AA=(m_AA[2]-m_AA[0])/0.11;
-				break;
-			}
-		str4.Format(_T("%f"),Vel_Real_AA);
-		str5.Format(_T("%f"),Vel_Real_SA);
-		::SetDlgItemText(m_hWnd,EDIT_AA_VEL, str4);
-		::SetDlgItemText(m_hWnd,EDIT_SA_VEL, str5);
+		GetDlgItemText(EDIT_FEEDFORD,FF_S);//获取对话框KD数值
+		FF=atof(FF_S);
+		//m_AA[AS_i]=Posi_Angle_Arm/**M_PI/180*/;//tmp1为返回的角度值
+		//str2.Format(_T("%8.3f"),m_AA[AS_i]);
+		//::SetDlgItemText(m_hWnd,EDIT_AA, str2);
+		//switch (AS_i)
+		//	{
+		//	case 0:
+		//		if(FT_i==0){
+		//			Vel_Real_AA=0;}
+		//		else{
+		//			Vel_Real_AA=(m_AA[0]-m_AA[1])/0.11;
+		//		}
+		//		break;
+		//	case 1:
+		//		if (FT_i<=1)
+		//		{
+		//			Vel_Real_AA=(m_AA[1]-m_AA[0])/0.055;
+		//		} 
+		//		else
+		//		{
+		//			Vel_Real_AA=(m_AA[1]-m_AA[2])/0.11;
+		//		}
+		//		break;
+		//	case 2:Vel_Real_AA=(m_AA[2]-m_AA[0])/0.11;
+		//		break;
+		//	}
+		//str4.Format(_T("%f"),Vel_Real_AA);
+		//::SetDlgItemText(m_hWnd,EDIT_AA_VEL, str4);
 		if (FT_i<=500)
 			{
 				if (FT_i==0)
 				 {
 					 APS_set_axis_param_f( 0, PRA_STP_DEC, 10000.0 );
 					 APS_set_axis_param_f( 0, PRA_CURVE,      0.5 ); //Set acceleration rate
-					 APS_set_axis_param_f( 0, PRA_ACC,    200000.0 ); //Set acceleration rate
-					 APS_set_axis_param_f( 0, PRA_DEC,    200000.0 ); //Set deceleration rate
+					 APS_set_axis_param_f( 0, PRA_ACC,    400000.0 ); //Set acceleration rate
+					 APS_set_axis_param_f( 0, PRA_DEC,    400000.0 ); //Set deceleration rate
 
 					//Check servo on or not
 					if( !( ( APS_motion_io_status( 0 ) >> MIO_SVON ) & 1 ) )  
@@ -1404,11 +1502,11 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 					Pos_PID=Pos_PID+KP*(Pos_Error[0]-Pos_Error[1])+KI*Pos_Error[0]+KD*(Pos_Error[0]-2*Pos_Error[1]+Pos_Error[2]);
 					Pos_Error[2]=Pos_Error[1];
 					Pos_Error[1]=Pos_Error[0];
-					Pos_Comd_Motor=(Pos_PID+30)*625;
+					Pos_Comd_Motor=(Pos_PID+FF)*625;
 					APS_set_axis_param_f( 0, PRA_STP_DEC, 10000.0 );
 					APS_set_axis_param_f( 0, PRA_CURVE,      0.5 ); //Set acceleration rate
-					APS_set_axis_param_f( 0, PRA_ACC,    200000.0 ); //Set acceleration rate
-					APS_set_axis_param_f( 0, PRA_DEC,    200000.0 ); //Set deceleration rate
+					APS_set_axis_param_f( 0, PRA_ACC,    400000.0 ); //Set acceleration rate
+					APS_set_axis_param_f( 0, PRA_DEC,    400000.0 ); //Set deceleration rate
 
 					//Check servo on or not
 					if( !( ( APS_motion_io_status( 0 ) >> MIO_SVON ) & 1 ) )  
@@ -1424,6 +1522,10 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 					APS_vel(0, 0,Pos_Comd_Motor, 0 );
 					else
 					APS_vel(0, 1, -1*Pos_Comd_Motor, 0 );
+				}
+				if (Posi_Angle_Arm>20)
+				{
+					PID_Prio=TRUE;
 				}
 					APS_get_feedback_velocity_f(0, &tmp);
 					lineseries1=(CSeries)m_FTVEL.Series(0);
@@ -1441,7 +1543,6 @@ void Cmotortest20151013Dlg::OnTimer(UINT_PTR nIDEvent)
 					strTime.Format(_T("%f"),exe_time);
 					SetDlgItemText(IDC_EDIT_CLOOP, strTime);
 					FT_i++;
-					AS_i++;
 
 			}
 			else
@@ -1521,7 +1622,7 @@ void Cmotortest20151013Dlg::OndHomeButton()
 		APS_set_servo_on( 0, ON ); 
 		Sleep( 500 ); // Wait stable.
 	}
-
+	PID_Prio=TRUE;
 	APS_vel( 0, 1, speed_1, 0 );
 }
 
@@ -1532,10 +1633,6 @@ void Cmotortest20151013Dlg::OnClearAllSeries()
 	for (int i=0;i<m_FTVEL.get_SeriesCount();i++)
 	{
 		((CSeries)m_FTVEL.Series(i)).Clear();
-	}
-	for (int i=0;i<3;i++)
-	{
-		m_AA[i]=0;
 	}
 	Posi_Angle_Arm=0;
 	Vel_Real_AA=0;
@@ -1562,7 +1659,7 @@ void Cmotortest20151013Dlg::OnPidControl()
 	if (Is_axis_err(0) == YES) return;
 	if (Is_axis_err(1) == YES) return;
 	Pos_init=Posi_Angle_Arm;
-	
+	PID_Prio=FALSE;
 	if (PID_flag)
 	{
 		
@@ -1573,7 +1670,6 @@ void Cmotortest20151013Dlg::OnPidControl()
 		}
 		OnClearAllSeries();
 		SetTimer(1,50,NULL);
-		Sleep(50);
 		SetDlgItemText(BUTTON_PID_CONTROL,_T("停止"));
 		PID_flag=false;
 	} 
@@ -1613,11 +1709,12 @@ void Cmotortest20151013Dlg::OnCommMscomm1()
 		if (((rxdata1[0] & 0xFF) == 0xAA) && (((rxdata1[2] + rxdata1[3] + rxdata1[4] + rxdata1[5]) & 0xFF) == rxdata1[6]))              //数据帧校验通过
 		{
 			BMQ_Val1 = ((rxdata1[5] & 0xFF) | ((rxdata1[4] & 0xFF) << 8) | ((rxdata1[3] & 0xFF) << 16) | ((rxdata1[2] & 0xFF) << 24)) & 0xFFFFFFF; //数据拼接
-
+			g_mutex.Lock();
 			Posi_Angle_Arm = ((double)(BMQ_Val1 & 0xFFF) / 0xFFF)*360.0;    //将0x000-0xFFF的12位十六进制数据转换成0-360角度值
+		    g_mutex.Unlock();
 		}
 	}
-	UpdateData(FALSE);           //更新编辑框内容
+	//UpdateData(FALSE);           //更新编辑框内容
 }
 void Cmotortest20151013Dlg::OnRadioPosition()
 {
@@ -1625,41 +1722,133 @@ void Cmotortest20151013Dlg::OnRadioPosition()
 	GetDlgItem(IDC_P2P_BUTTON4)->EnableWindow(TRUE);
 	GetDlgItem(IDC_LeftShouder_BUTTON)->EnableWindow(TRUE);
 	GetDlgItem(IDC_RightEar_BUTTON)->EnableWindow(TRUE);
+	////
+	GetDlgItem(BUTTON_VEL_MOT1)->EnableWindow(FALSE);
+
+	GetDlgItem(EDIT_VEL_MIX)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_VEL_MOT2)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_VEL_START)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_PID_CONTROL)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_PID_SAVE)->EnableWindow(FALSE);
+
+	GetDlgItem(IDC_LearnB_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_M_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LearnE_BUTTON2)->EnableWindow(FALSE);
 }
 
 
 void Cmotortest20151013Dlg::OnRadioVSingle()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	GetDlgItem(IDC_P2P_BUTTON4)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LeftShouder_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_RightEar_BUTTON)->EnableWindow(FALSE);
+
 	GetDlgItem(BUTTON_VEL_MOT1)->EnableWindow(TRUE);
-	GetDlgItem(Button_VEL_STOP)->EnableWindow(TRUE);
+
 	GetDlgItem(EDIT_VEL_MIX)->EnableWindow(TRUE);
 	GetDlgItem(BUTTON_VEL_MOT2)->EnableWindow(TRUE);
+
+	GetDlgItem(BUTTON_VEL_START)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_PID_CONTROL)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_PID_SAVE)->EnableWindow(FALSE);
+
+	GetDlgItem(IDC_LearnB_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_M_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LearnE_BUTTON2)->EnableWindow(FALSE);
+
 }
 
 
 void Cmotortest20151013Dlg::OnRadioSix()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	GetDlgItem(IDC_P2P_BUTTON4)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LeftShouder_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_RightEar_BUTTON)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_VEL_MOT1)->EnableWindow(FALSE);
+
+	GetDlgItem(EDIT_VEL_MIX)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_VEL_MOT2)->EnableWindow(FALSE);
+
 	GetDlgItem(BUTTON_VEL_START)->EnableWindow(TRUE);
+
+	GetDlgItem(BUTTON_PID_CONTROL)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_PID_SAVE)->EnableWindow(FALSE);
+
+	GetDlgItem(IDC_LearnB_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_M_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LearnE_BUTTON2)->EnableWindow(FALSE);
 }
 
 
 void Cmotortest20151013Dlg::OnRadioPid()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	GetDlgItem(IDC_P2P_BUTTON4)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LeftShouder_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_RightEar_BUTTON)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_VEL_MOT1)->EnableWindow(FALSE);
+
+	GetDlgItem(EDIT_VEL_MIX)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_VEL_MOT2)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_VEL_START)->EnableWindow(FALSE);
+
+	
 	GetDlgItem(BUTTON_PID_CONTROL)->EnableWindow(TRUE);
+	GetDlgItem(BUTTON_PID_SAVE)->EnableWindow(TRUE);
+
+	GetDlgItem(IDC_LearnB_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_M_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LearnE_BUTTON2)->EnableWindow(FALSE);
+	
 }
 
 
 void Cmotortest20151013Dlg::OnRadioEmg()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	GetDlgItem(IDC_P2P_BUTTON4)->EnableWindow(FALSE);
+	GetDlgItem(IDC_LeftShouder_BUTTON)->EnableWindow(FALSE);
+	GetDlgItem(IDC_RightEar_BUTTON)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_VEL_MOT1)->EnableWindow(FALSE);
+
+	GetDlgItem(EDIT_VEL_MIX)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_VEL_MOT2)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_VEL_START)->EnableWindow(FALSE);
+
+	GetDlgItem(BUTTON_PID_SAVE)->EnableWindow(FALSE);
+	GetDlgItem(BUTTON_PID_CONTROL)->EnableWindow(FALSE);
+
 	GetDlgItem(IDC_LearnB_BUTTON)->EnableWindow(TRUE);
 	GetDlgItem(IDC_M_BUTTON)->EnableWindow(TRUE);
 	GetDlgItem(IDC_LearnE_BUTTON2)->EnableWindow(TRUE);
 }
-
+VOID Cmotortest20151013Dlg::OnWarning()
+{
+	if (Posi_Angle_Arm<8||Posi_Angle_Arm>85||tmp>200000)
+	{
+		GetDlgItem(IDC_STATIC_WARN)->ShowWindow(TRUE);
+		CBitmap bitmap;
+		bitmap.LoadBitmap(IDB_BITMAP2);
+		CStatic *p=(CStatic*)GetDlgItem(IDC_STATIC_WARN);
+		p->ModifyStyle(0xf,SS_BITMAP|SS_CENTERIMAGE);
+		p->SetBitmap(bitmap);
+	} 
+	else
+	{
+		GetDlgItem(IDC_STATIC_WARN)->ShowWindow(FALSE);
+	}
+	
+}
 
 void Cmotortest20151013Dlg::OnButtonQuit()
 {
@@ -1683,5 +1872,8 @@ void Cmotortest20151013Dlg::OnButtonQuit()
 	m_flag5=FALSE;
 	KillTimer(0);
 	KillTimer(1);
+	m_comm.put_PortOpen(false);
+	timeKillEvent(Mtimer_ID);
+	timeEndPeriod(wAccuracy);
 	CDialog::OnClose();
 }

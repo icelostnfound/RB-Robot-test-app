@@ -26,6 +26,7 @@ private:
 	CSixAxisSensorDlg m_SixAxisSensorVEL;
 public:
 	Cmotortest20151013Dlg(CWnd* pParent = NULL);	// 标准构造函数
+
 // 对话框数据
 	enum { IDD = IDD_MOTORTEST20151013_DIALOG };
 
@@ -51,6 +52,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnClose();
+	
 	afx_msg BOOL Login();
 	DECLARE_MESSAGE_MAP()
 public:
@@ -98,6 +100,8 @@ public:
 	void RightearBack();
 	void RelaySwitchOpen();
 	void RelaySwitchClose();
+	VOID OnWarning();
+	VOID Reci_Vel_Arm();
 	BOOL DAQ_EMG(CString changeDeviceName, short changeFirstChannel);
 	BOOL DAQ_EAF(CString changeDeviceName, short changeFirstChannel,short changeLastChannel);
 	BOOL onCommSet();

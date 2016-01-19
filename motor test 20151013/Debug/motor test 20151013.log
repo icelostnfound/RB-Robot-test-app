@@ -1,13 +1,20 @@
-﻿生成启动时间为 2016/1/17 22:48:27。
+﻿生成启动时间为 2016/1/19 21:19:46。
      1>项目“D:\RB\project\RB Robot\RB Robot app\RB-Robot-test-app\motor test 20151013\motor test 20151013.vcxproj”在节点 2 上(Build 个目标)。
      1>ClCompile:
-         C:\Program Files\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _MBCS /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt "motor test 20151013Dlg.cpp"
+         C:\Program Files\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _MBCS /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt "motor test 20151013.cpp" "motor test 20151013Dlg.cpp"
          motor test 20151013Dlg.cpp
-     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(260): warning C4800: “BOOL”: 将值强制为布尔值“true”或“false”(性能警告)
-     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(1083): warning C4101: “Axis_ID”: 未引用的局部变量
-     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(1093): warning C4101: “Axis_ID”: 未引用的局部变量
-     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(1440): warning C4244: “=”: 从“LONGLONG”转换到“double”，可能丢失数据
-     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(224): warning C4715: “Cmotortest20151013Dlg::Login”: 不是所有的控件路径都返回值
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(269): warning C4800: “BOOL”: 将值强制为布尔值“true”或“false”(性能警告)
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(875): warning C4244: “=”: 从“LONGLONG”转换到“double”，可能丢失数据
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(826): warning C4101: “dwend”: 未引用的局部变量
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(826): warning C4101: “dwbegain”: 未引用的局部变量
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(1175): warning C4101: “Axis_ID”: 未引用的局部变量
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(1185): warning C4101: “Axis_ID”: 未引用的局部变量
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(1540): warning C4244: “=”: 从“LONGLONG”转换到“double”，可能丢失数据
+         正在生成代码...
+     1>d:\rb\project\rb robot\rb robot app\rb-robot-test-app\motor test 20151013\motor test 20151013dlg.cpp(233): warning C4715: “Cmotortest20151013Dlg::Login”: 不是所有的控件路径都返回值
+         正在编译...
+         motor test 20151013.cpp
+         正在生成代码...
        Link:
          C:\Program Files\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\RB\project\RB Robot\RB Robot app\RB-Robot-test-app\Debug\motor test 20151013.exe" /INCREMENTAL /NOLOGO /LIBPATH:"D:\RB\project\RB Robot\RB Robot app\motor test 20151013" /LIBPATH:"D:\RB\project\RB Robot\APS Library" APS168.lib NIDAQmx.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"C:\Program Files\Microsoft Visual Studio 11.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"D:\RB\project\RB Robot\RB Robot app\RB-Robot-test-app\Debug\motor test 20151013.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\RB\project\RB Robot\RB Robot app\RB-Robot-test-app\Debug\motor test 20151013.lib" /MACHINE:X86 "Debug\motor test 20151013.res"
          Debug\atidaqft.obj
@@ -38,4 +45,4 @@
 
 生成成功。
 
-已用时间 00:00:04.22
+已用时间 00:00:07.55

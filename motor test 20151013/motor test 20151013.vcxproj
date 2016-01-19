@@ -183,6 +183,7 @@
     <Image Include="res\bitmap2.bmp" />
     <Image Include="res\coordinate.bmp" />
     <Image Include="res\motor test 20151013.ico" />
+    <Image Include="res\Warning.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
