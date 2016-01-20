@@ -82,7 +82,7 @@ public:
 	double m_Dec1;
 	double m_SFac1;
 	double FT[50];
-	int FT_i;
+	
 	int m_FTT;
 	int ptp[2];
 	BOOL mt_flag;
@@ -141,4 +141,5 @@ public:
 	afx_msg void OnRadioPid();
 	afx_msg void OnRadioEmg();
 	afx_msg void OnButtonQuit();
+	afx_msg void OnPidSaveData();
 };
