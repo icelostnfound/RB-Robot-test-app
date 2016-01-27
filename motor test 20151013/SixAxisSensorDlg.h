@@ -6,6 +6,7 @@
 //}}AFX_INCLUDES
 #include "ProgramOpDlg.h"
 #include "SixAixsSettingDlg.h"
+#include "m1f_tchart.h"
 
 class CVisualCSampleDlgAutoProxy;
 class DAQSys;
@@ -107,4 +108,5 @@ public:
 	CStatic  mValues[6];
 	CStatic mLabelThermistor;
 	CButton m_buttonLog;
+	CM1f_tchart m_SixTchart;
 };

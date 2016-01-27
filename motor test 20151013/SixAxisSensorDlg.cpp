@@ -12,6 +12,11 @@
 #include "ConfigureSaveData.h"
 #include "RegAccess.h"
 #include <direct.h>
+#include"CAxes.h"
+#include"CAxis.h"
+#include"CSeries.h"
+#include"CTChart.h"
+#include"CScroll.h"
 #include  <fstream>
 using namespace std;
 #define PEAK_FT 20
@@ -22,11 +27,13 @@ using namespace std;
 // doesn't matter what it is, as long as they all use the same timer
 #define TIMER_1 42
 // CSixAxisSensorDlg 对话框
-
+double Pic_i=0;
+int Timer_Period=0;
 IMPLEMENT_DYNAMIC(CSixAxisSensorDlg, CDialogEx)
 
 CSixAxisSensorDlg::CSixAxisSensorDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSixAxisSensorDlg::IDD, pParent)
+	
 {
 	//{{AFX_DATA_INIT(CVisualCSampleDlg)
 	m_display = -1;
@@ -51,6 +58,7 @@ CSixAxisSensorDlg::~CSixAxisSensorDlg()
 		delete dlgProgramOptions;
 	if (NULL != dlgSettings)
 		delete dlgSettings;
+	this->KillTimer(TIMER_1);
 }
 
 void CSixAxisSensorDlg::DoDataExchange(CDataExchange* pDX)
@@ -95,6 +103,7 @@ void CSixAxisSensorDlg::DoDataExchange(CDataExchange* pDX)
 
 
 
+	DDX_Control(pDX, IDC_TCHART1, m_SixTchart);
 }
 
 
@@ -166,6 +175,7 @@ void CSixAxisSensorDlg::CustomInitialization()
 		// DAQ loaded fine
 		dlgProgramOptions = new CProgramOpDlg(&mFTWrapper, this);
 		dlgSettings = new CSixAixsSettingDlg(&mFTWrapper, this);
+		Timer_Period=dlgProgramOptions->getTimer();
 		this->SetTimer(TIMER_1,dlgProgramOptions->getTimer(),NULL); // the timer is actually rounded up to the nearest 55 ms, so this will be 110 ms
 		// if the DAQ is okay then we are ready to load a calibration file and/or make changes to the DAQ settings
 		menu->EnableMenuItem(OPEN_CALIBRATION, MF_ENABLED);
@@ -265,6 +275,8 @@ str.Format("%4.4f",t*inIbToNm);
 void CSixAxisSensorDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	CSeries lineseries[6];
+	double P=0;
 	static bool alreadyScanning = false;	// using this boolean will help prevent 2 timer events from being processed at the same time
 	if (nIDEvent == TIMER_1) {
 		if (alreadyScanning == false) {
@@ -287,6 +299,29 @@ void CSixAxisSensorDlg::OnTimer(UINT_PTR nIDEvent)
 				else {
 					mLabelMessage.SetWindowText("");
 				}
+				for (int j=0;j<6;j++)
+				{
+					lineseries[j]=(CSeries)m_SixTchart.Series(j);
+					if (j<3)
+					{
+						lineseries[j].AddXY((float)Pic_i*Timer_Period*0.001,readings[j]*IbToN,NULL,0);
+					}
+					else
+					{
+						lineseries[j].AddXY((float)Pic_i*Timer_Period*0.001,readings[j]*inIbToNm,NULL,0);
+					}
+					
+				}
+				P=(int)(Pic_i*Timer_Period*0.001)%30;
+				if (!P)
+				{
+					for (int i=0;i<m_SixTchart.get_SeriesCount();i++)
+					{
+						((CSeries)m_SixTchart.Series(i)).Clear();
+					}
+					//Pic_i==0;
+				}
+				Pic_i++;
 				//利用WM_COPYDATA实现进程间通信
 				FTT=readings[2]*IbToN;
 				CString str;
@@ -470,7 +505,7 @@ void CSixAxisSensorDlg::OnCalibration()
 	}
 	mFTWrapper.LoadCalFile("");
 	//	mFTWrapper.LoadCalFile("I:/Engineering/Software/FT/DAQ FT Customer Software/Visual C Sample/input/dual.cal");
-	CString filename = mFTWrapper.GetFTSensor()->GetCalFilePath();
+	CString filename = "D:\\RB\\project\\RB Robot\\RB Robot app\\RB-Robot-test-app\\motor test 20151013\\Calibration\\FT16737.cal";//mFTWrapper.GetFTSensor()->GetCalFilePath();
 	if (filename == "") {
 		//		mLabelMessage.SetWindowText("Calibration File was not loaded");
 	}
@@ -548,7 +583,7 @@ void CSixAxisSensorDlg::OnBnClickedFt()
 	int i;
 	show_raw_voltages = false;
 	for (i=0; i<6; i++) {
-		if (i<=3)
+		if (i<3)
 		{
 			mUnit[i].SetWindowText(_T("N"));
 		}
@@ -557,9 +592,9 @@ void CSixAxisSensorDlg::OnBnClickedFt()
 			mUnit[i].SetWindowText(_T("N-m"));
 		}
 	}
-	mLabelMax[0].SetWindowText(_T("580N"));
-	mLabelMax[1].SetWindowText(_T("580N"));
-	mLabelMax[2].SetWindowText(_T("1160N"));
+	mLabelMax[0].SetWindowText(_T("290N"));
+	mLabelMax[1].SetWindowText(_T("290N"));
+	mLabelMax[2].SetWindowText(_T("580N"));
 	mLabelMax[3].SetWindowText(_T("20N-m"));
 	mLabelMax[4].SetWindowText(_T("20N-m"));
 	mLabelMax[5].SetWindowText(_T("20N-m"));

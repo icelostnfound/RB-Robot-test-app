@@ -13,6 +13,7 @@
 #include"ForceChartDlg.h"
 #include "LoginDlg.h"
 #include "SixAxisSensorDlg.h"
+#include "ArmEncoderDlg.h"
 #include "CTChart0.h"
 #include "m1f_tchart.h"
 #include "mscomm1.h"
@@ -22,7 +23,7 @@ class Cmotortest20151013Dlg : public CDialogEx
 // 构造
 private:
 	 CForceChartDlg m_ForceChartDlg;
-	 CLoginDlg myDlg;
+	 CLoginDlg      myDlg;
 	CSixAxisSensorDlg m_SixAxisSensorVEL;
 public:
 	Cmotortest20151013Dlg(CWnd* pParent = NULL);	// 标准构造函数
@@ -82,11 +83,15 @@ public:
 	double m_Dec1;
 	double m_SFac1;
 	double FT[50];
-	
+	double Arm_Pos_Dlg;//肘部角位移传给画图窗口的中间变量
+	double Shoul_Pos_Dlg;//肩部角位移传给画图窗口的中间变量
+	double Arm_Vel_Dlg;//肘部角速度传给画图窗口的中间变量
+	double Shoul_Vel_Dlg;//肘部角速度传给画图窗口的中间变量
 	int m_FTT;
 	int ptp[2];
 	BOOL mt_flag;
 	BOOL relay_flag;
+	void * m_pA;
     //////////////////////////////////////////////////////////////////
 	void Function_Result( I32 Ret );
 	I32 Is_CARD_INITIAL(void);
@@ -102,6 +107,7 @@ public:
 	void RelaySwitchClose();
 	VOID OnWarning();
 	VOID Reci_Vel_Arm();
+	VOID Pos_Mode_Motor(double Pos_Angle_A,double Pos_Angle_S);
 	BOOL DAQ_EMG(CString changeDeviceName, short changeFirstChannel);
 	BOOL DAQ_EAF(CString changeDeviceName, short changeFirstChannel,short changeLastChannel);
 	BOOL onCommSet();
@@ -133,7 +139,7 @@ public:
 	afx_msg void OnEnChangefv0();
 	CMscomm1 m_comm;
 	DECLARE_EVENTSINK_MAP()
-	void OnCommMscomm1();
+	//void OnCommMscomm1();
 	
 	afx_msg void OnRadioPosition();
 	afx_msg void OnRadioVSingle();
@@ -142,4 +148,13 @@ public:
 	afx_msg void OnRadioEmg();
 	afx_msg void OnButtonQuit();
 	afx_msg void OnPidSaveData();
+	afx_msg void OnBnVelMode();
+	double KP_E;
+	double KI_E;
+	double KD_E;
+	double FF_E;
+	afx_msg void OnEquipmentsArmencoder();
+	afx_msg void OnMenuShoulE();
+	double m_VelShoul;
+	double m_VelArm;
 };

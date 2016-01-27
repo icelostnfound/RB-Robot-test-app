@@ -74,7 +74,7 @@ VOID ThreadFun(LPVOID pParam)
 	CString str3;
 	CString str4;
 	CString str5;
-	CString strTime;
+	CString strTime1;
 	CSeries lineseries1;
 	CSeries lineseries2;
 	clock_t start,finish;//定义存储开始于结束的时间的变量
@@ -86,12 +86,12 @@ VOID ThreadFun(LPVOID pParam)
 	start=clock();//存储开始时间
 	 dlg->receive_data();
 	 time = CTime::GetCurrentTime();
-	strTime=time.Format("%H:%M:%S");//显示当前时间
+	strTime1=time.Format("%H:%M:%S");//显示当前时间
 	str1.Format(_T("%8.3f"),RD[0]);
 	str2.Format(_T("%8.3f"),RD[1]);
 	str3.Format(_T("%8.3f"),RD[2]*196);
 	str4.Format(_T("%8.3f"),RD[3]*196);
-	::SetDlgItemText(dlg->m_hWnd,IDC_Time_EDIT,strTime);
+	::SetDlgItemText(dlg->m_hWnd,IDC_Time_EDIT,strTime1);
 	::SetDlgItemText(dlg->m_hWnd,IDC_AA_EDIT, str1);
 	::SetDlgItemText(dlg->m_hWnd,IDC_SA_EDIT, str2);
 	::SetDlgItemText(dlg->m_hWnd,IDC_M1F_EDIT, str3);

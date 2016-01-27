@@ -141,6 +141,12 @@
     <ClInclude Include="mscomm1.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ShoulderEncoderDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ArmEncoderDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="motor test 20151013.cpp">
@@ -212,6 +218,12 @@
     <ClCompile Include="mscomm1.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ShoulderEncoderDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ArmEncoderDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="motor test 20151013.rc">
@@ -237,6 +249,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\Warning.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\coordinate1.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
